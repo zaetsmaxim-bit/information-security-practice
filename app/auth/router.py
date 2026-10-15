@@ -1,3 +1,5 @@
+from fastapi import Request
+from app.audit import get_client_ip, is_brute_force, log_event
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
 from sqlalchemy.orm import Session
@@ -30,6 +32,21 @@ def register(request: Request, user_data: UserCreate, db: Session = Depends(get_
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
+    client_ip = get_client_ip(request)
+    uname = getattr(form_data, 'username', None) if 'form_data' in locals() else (getattr(user_data, 'username', None) if 'user_data' in locals() else (getattr(data, 'username', None) if 'data' in locals() else 'unknown'))
+    if is_brute_force(db, uname, client_ip):
+        log_event(
+            db,
+            action="brute_force_detected",
+            status="BLOCKED",
+            username=uname,
+            resource="auth",
+            status_code=429,
+            details=f"Too many failed login attempts from {client_ip}",
+            request=request,
+        )
+        raise HTTPException(status_code=429, detail="Забагато невдалих спроб входу. Спробуйте пізніше.")
+
     user = db.query(User).filter(User.username == credentials.username).first()
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Невірний логін або пароль")

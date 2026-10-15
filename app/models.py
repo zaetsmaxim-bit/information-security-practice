@@ -95,3 +95,20 @@ class Grade(Base):
     subject = relationship("Subject", back_populates="grades")
     teacher = relationship("User", foreign_keys=[assigned_by])
 
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    username = Column(String(50), nullable=True)
+    action = Column(String(50), nullable=False, index=True)
+    resource = Column(String(100), nullable=True)
+    resource_id = Column(Integer, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(255), nullable=True)
+    status = Column(String(20), nullable=False)
+    status_code = Column(Integer, nullable=True)
+    details = Column(String(500), nullable=True)
