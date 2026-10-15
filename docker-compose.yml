@@ -5,12 +5,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - .:/app
       - .:/app_code
-      - db_data:/app_code/data
     environment:
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-secret-change-me}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:8000
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - BLIND_INDEX_KEY=${BLIND_INDEX_KEY}
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     restart: unless-stopped
-
-volumes:
-  db_data:

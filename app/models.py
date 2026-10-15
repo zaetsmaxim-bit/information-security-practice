@@ -1,3 +1,4 @@
+from app.crypto.encryption import blind_index, decrypt_field, encrypt_field
 from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
@@ -19,7 +20,26 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
-    email = Column(String(100), unique=True, nullable=False, index=True)
+    _encrypted_email = Column("encrypted_email", String(500), nullable=True)
+    email_index = Column(String(64), unique=True, nullable=True, index=True)
+    _encrypted_phone = Column("encrypted_phone", String(500), nullable=True)
+
+    @property
+    def email(self) -> str | None:
+        return decrypt_field(self._encrypted_email)
+
+    @email.setter
+    def email(self, value: str | None) -> None:
+        self._encrypted_email = encrypt_field(value)
+        self.email_index = blind_index(value) if value else None
+
+    @property
+    def phone(self) -> str | None:
+        return decrypt_field(self._encrypted_phone)
+
+    @phone.setter
+    def phone(self, value: str | None) -> None:
+        self._encrypted_phone = encrypt_field(value) if value else None
     full_name = Column(String(150), nullable=False)
     password_hash = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -74,3 +94,4 @@ class Grade(Base):
     student = relationship("User", back_populates="grades", foreign_keys=[student_id])
     subject = relationship("Subject", back_populates="grades")
     teacher = relationship("User", foreign_keys=[assigned_by])
+
